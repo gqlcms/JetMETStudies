@@ -195,6 +195,8 @@ class JMEAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
   vector<double>  _lEta;
   vector<double>  _lPhi;
   vector<double>  _lPt;
+  vector<double> all_lepton_PT;
+  vector<double> all_lepton_Eta;
   vector<int> _lpdgId;
 
   vector<double>  _lgenEta;
@@ -458,6 +460,10 @@ JMEAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
   edm::Handle< std::vector<pat::Muon> > thePatMuons;
   iEvent.getByToken(muonToken_,thePatMuons);
+  
+  TLorentzVector all_lepton;
+  all_lepton.SetPtEtaPhiE( 0, 0, 0, 0);
+  
   for( std::vector<pat::Muon>::const_iterator muon = (*thePatMuons).begin(); muon != (*thePatMuons).end(); muon++ ) {
     if((&*muon)->pt()<MuonPtCut_)continue;
     bool passid=  (&*muon)->passed(reco::Muon::CutBasedIdMediumPrompt )&& (&*muon)->passed(reco::Muon::PFIsoTight ); 
@@ -467,6 +473,21 @@ JMEAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     _lPhi.push_back((&*muon)->phi());
     _lPt.push_back((&*muon)->pt());
     _lpdgId.push_back(-13*(&*muon)->charge());
+
+	TLorentzVector all_lepton1;
+	all_lepton1.SetPtEtaPhiE( (&*muon)->pt(), (&*muon)->eta(), (&*muon)->phi(), (&*muon)->energy() );
+	all_lepton += all_lepton1;
+
+
+  }
+//  vector<double> all_lepton_PT;
+//  vector<double> all_lepton_Eta;
+//  double event_Z_jets=0;
+  if (all_lepton.E()!=0) {
+    all_lepton_PT.push_back(all_lepton.Pt());
+    all_lepton_Eta.push_back(all_lepton.Eta());
+  } else {
+ //   event_Z_jets = 0;
   }
 
   edm::Handle< std::vector<pat::Photon> > thePatPhotons;
@@ -681,6 +702,8 @@ JMEAnalyzer::beginJob()
   outputTree->Branch("_lEta",&_lEta);
   outputTree->Branch("_lPhi",&_lPhi);
   outputTree->Branch("_lPt",&_lPt);
+  outputTree->Branch("all_lepton_PT",&all_lepton_PT);
+  outputTree->Branch("all_lepton_Eta",&all_lepton_Eta);
   outputTree->Branch("_lpdgId",&_lpdgId);
 
   outputTree->Branch("_lgenEta",&_lgenEta);
@@ -872,6 +895,8 @@ void JMEAnalyzer::InitandClearStuff(){
   _lEta.clear();
   _lPhi.clear();
   _lPt.clear();
+  all_lepton_PT.clear();
+  all_lepton_Eta.clear();
   _lpdgId.clear();
 
   _lgenEta.clear();
