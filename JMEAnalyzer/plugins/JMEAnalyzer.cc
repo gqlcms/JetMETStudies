@@ -134,6 +134,8 @@ class JMEAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
 
   //Some histos to be saved for simple checks 
   TH1F *h_PFMet, *h_PuppiMet, *h_nvtx;
+  //for plots
+  TH1F *h_QT_QT, *h_QT_Up;
   //The output TTree
   TTree* outputTree;
 
@@ -195,8 +197,11 @@ class JMEAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
   vector<double>  _lEta;
   vector<double>  _lPhi;
   vector<double>  _lPt;
+  vector<double>  U_parrallel;
   vector<double> all_lepton_PT;
+  vector<double> all_jets_PT;
   vector<double> all_lepton_Eta;
+  vector<double> all_jets_Eta;
   vector<int> _lpdgId;
 
   vector<double>  _lgenEta;
@@ -315,6 +320,9 @@ JMEAnalyzer::JMEAnalyzer(const edm::ParameterSet& iConfig)
   h_PFMet  = fs->make<TH1F>("h_PFMet" , "Type 1 PFMET (GeV);Type 1 PFMET (GeV);Events"  ,    1000, 0., 5000.);
   h_PuppiMet  = fs->make<TH1F>("h_PuppiMet" , "PUPPI MET (GeV);PUPPI MET (GeV);Events"  ,    1000, 0., 5000.);
 
+  h_QT_QT  = fs->make<TH1F>("h_QT_QT" , "QT ; QT"  ,    1000, 0., 5000.);
+  h_QT_Up  = fs->make<TH1F>("h_QT_Up" , "QT : Up"  ,    1000, 0., 5000.);
+
   outputTree = fs->make<TTree>("tree","tree");
 
 }
@@ -400,7 +408,10 @@ JMEAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   iSetup.get<JetCorrectionsRecord>().get("AK4PFchs",JetCorParColl); 
   JetCorrectorParameters const & JetCorPar = (*JetCorParColl)["Uncertainty"];
   JetCorrectionUncertainty *jecUnc = new JetCorrectionUncertainty(JetCorPar);
-
+ 
+  TLorentzVector all_jets;
+  all_jets.SetPtEtaPhiE( 0, 0, 0, 0); 
+ 
   double leadjetpt (0.);
   for( std::vector<pat::Jet>::const_iterator jet = (*theJets).begin(); jet != (*theJets).end(); jet++ ) {
     if((&*jet)->pt() >leadjetpt) leadjetpt = (&*jet)->pt();
@@ -441,9 +452,22 @@ JMEAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     _jetEtaGen.push_back(jetetagen);
     _jetPhiGen.push_back(jetphigen);
 
+        TLorentzVector all_jets1;
+        all_jets1.SetPtEtaPhiE( (&*jet)->pt(), (&*jet)->eta(), (&*jet)->phi(), (&*jet)->energy() );
+        all_jets += all_jets1;
+
   }
-  
-  
+ 
+  bool have_jets=false;
+  if (all_jets.E()!=0) {
+    have_jets=true;
+    all_jets_PT.push_back(all_jets.Pt());
+    all_jets_Eta.push_back(all_jets.Eta());
+  } else {
+ //   event_Z_jets = 0;
+    }
+
+
   edm::Handle< std::vector<pat::Electron> > thePatElectrons;
   iEvent.getByToken(electronToken_,thePatElectrons);
   for( std::vector<pat::Electron>::const_iterator electron = (*thePatElectrons).begin(); electron != (*thePatElectrons).end(); electron++ ) {
@@ -483,12 +507,27 @@ JMEAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 //  vector<double> all_lepton_PT;
 //  vector<double> all_lepton_Eta;
 //  double event_Z_jets=0;
+  bool have_lepton=false;
   if (all_lepton.E()!=0) {
+    have_lepton=true;
     all_lepton_PT.push_back(all_lepton.Pt());
     all_lepton_Eta.push_back(all_lepton.Eta());
   } else {
  //   event_Z_jets = 0;
   }
+
+  double Up;  
+  if( have_jets && have_lepton ){
+  double all_lepton_px=all_lepton.Px();
+  double all_lepton_py=all_lepton.Py();
+  double all_jets_px=all_jets.Px();
+  double all_jets_py=all_jets.Py();
+  double Up_dot_QT;
+  Up_dot_QT = all_lepton_px*all_jets_px+all_lepton_py*all_jets_py;
+  Up = Up_dot_QT/(all_lepton.Pt()); 
+  U_parrallel.push_back(Up); 
+  }
+
 
   edm::Handle< std::vector<pat::Photon> > thePatPhotons;
   iEvent.getByToken(photonToken_,thePatPhotons);
@@ -641,8 +680,12 @@ JMEAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   h_PFMet->Fill(_met);
   h_PuppiMet->Fill(_puppimet);
   h_nvtx->Fill(_n_PV);
-  
+  if ( have_jets && have_lepton ){
+  h_QT_QT->Fill(all_lepton.Pt(),all_lepton.Pt()); 
+  h_QT_Up->Fill(all_lepton.Pt(),Up); 
+  }
 }
+
 
 
 // ------------ method called once each job just before starting event loop  ------------
@@ -702,6 +745,7 @@ JMEAnalyzer::beginJob()
   outputTree->Branch("_lEta",&_lEta);
   outputTree->Branch("_lPhi",&_lPhi);
   outputTree->Branch("_lPt",&_lPt);
+  outputTree->Branch("U_parrallel",&U_parrallel);
   outputTree->Branch("all_lepton_PT",&all_lepton_PT);
   outputTree->Branch("all_lepton_Eta",&all_lepton_Eta);
   outputTree->Branch("_lpdgId",&_lpdgId);
@@ -895,6 +939,7 @@ void JMEAnalyzer::InitandClearStuff(){
   _lEta.clear();
   _lPhi.clear();
   _lPt.clear();
+  U_parrallel.clear();
   all_lepton_PT.clear();
   all_lepton_Eta.clear();
   _lpdgId.clear();
