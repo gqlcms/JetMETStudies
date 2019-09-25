@@ -174,6 +174,7 @@ class JMEAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
   vector<double>  _jetEta;
   vector<double>  _jetPhi;
   vector<double>  _jetPt;
+  vector<double>  _jetenergy;
   vector<double>  _jetRawPt;
   vector<double>  _jet_CHEF;
   vector<double>  _jet_NHEF;
@@ -197,6 +198,7 @@ class JMEAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
   vector<double>  _lEta;
   vector<double>  _lPhi;
   vector<double>  _lPt;
+  vector<double>  _lenergy;
   vector<double>  U_parrallel;
   vector<double> all_lepton_PT;
   vector<double> all_jets_PT;
@@ -421,6 +423,7 @@ JMEAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     _jetEta.push_back((&*jet)->eta());
     _jetPhi.push_back((&*jet)->phi());
     _jetPt.push_back((&*jet)->pt());
+    _jetenergy.push_back((&*jet)->energy());
     _jet_CHEF.push_back((&*jet)->chargedHadronEnergyFraction());
     _jet_NHEF.push_back((&*jet)->neutralHadronEnergyFraction() );
     _jet_NEEF.push_back((&*jet)->neutralEmEnergyFraction() );
@@ -478,6 +481,7 @@ JMEAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     _lEta.push_back((&*electron)->eta());
     _lPhi.push_back((&*electron)->phi());
     _lPt.push_back((&*electron)->pt());
+    _lenergy.push_back((&*electron)->energy());
     _lpdgId.push_back(-11*(&*electron)->charge());
 
   }
@@ -496,6 +500,7 @@ JMEAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     _lEta.push_back((&*muon)->eta());
     _lPhi.push_back((&*muon)->phi());
     _lPt.push_back((&*muon)->pt());
+    _lenergy.push_back((&*muon)->energy());
     _lpdgId.push_back(-13*(&*muon)->charge());
 
 	TLorentzVector all_lepton1;
@@ -721,6 +726,7 @@ JMEAnalyzer::beginJob()
   outputTree->Branch("_jetEta",&_jetEta);
   outputTree->Branch("_jetPhi",&_jetPhi);
   outputTree->Branch("_jetPt",&_jetPt);
+  outputTree->Branch("_jetenergy",&_jetenergy);
   outputTree->Branch("_jetRawPt",&_jetRawPt);
   outputTree->Branch("_jet_CHEF",&_jet_CHEF);
   outputTree->Branch("_jet_NHEF",&_jet_NHEF);
@@ -745,6 +751,7 @@ JMEAnalyzer::beginJob()
   outputTree->Branch("_lEta",&_lEta);
   outputTree->Branch("_lPhi",&_lPhi);
   outputTree->Branch("_lPt",&_lPt);
+  outputTree->Branch("_lenergy",&_lenergy);
   outputTree->Branch("U_parrallel",&U_parrallel);
   outputTree->Branch("all_lepton_PT",&all_lepton_PT);
   outputTree->Branch("all_lepton_Eta",&all_lepton_Eta);
@@ -916,6 +923,7 @@ void JMEAnalyzer::InitandClearStuff(){
   _jetEta.clear();
   _jetPhi.clear();
   _jetPt.clear();
+  _jetenergy.clear();
   _jetRawPt.clear();
   _jet_CHEF.clear();
   _jet_NHEF.clear();
@@ -939,6 +947,7 @@ void JMEAnalyzer::InitandClearStuff(){
   _lEta.clear();
   _lPhi.clear();
   _lPt.clear();
+  _lenergy.clear();
   U_parrallel.clear();
   all_lepton_PT.clear();
   all_lepton_Eta.clear();
