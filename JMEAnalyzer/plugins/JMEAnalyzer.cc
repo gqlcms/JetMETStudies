@@ -115,6 +115,8 @@ class JMEAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
   edm::EDGetTokenT<std::vector<Vertex> > verticesToken_; 
 
   edm::EDGetTokenT<std::vector< pat::Jet> > jetToken_;
+  edm::EDGetTokenT<std::vector< pat::Jet> > AK8jetToken_;
+  edm::EDGetTokenT<std::vector< pat::Jet> > PuppiAK8jetToken_;
   edm::EDGetTokenT<std::vector< pat::Jet> > jetPuppiToken_;
   edm::EDGetTokenT<pat::PackedCandidateCollection> pfcandsToken_;
   
@@ -172,6 +174,15 @@ class JMEAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
   vector<double>  _jetEta;
   vector<double>  _jetPhi;
   vector<double>  _jetPt;
+  vector<double>  _puppijetEta;
+  vector<double>  _puppijetPhi;
+  vector<double>  _puppijetPt;
+  vector<double>  _AK8jetPt;
+  vector<double>  _AK8jetEta;
+  vector<double>  _AK8jetPhi;
+  vector<double>  _PuppiAK8jetPt;
+  vector<double>  _PuppiAK8jetEta;
+  vector<double>  _PuppiAK8jetPhi;
   vector<double>  _jetRawPt;
   vector<double>  _jet_CHEF;
   vector<double>  _jet_NHEF;
@@ -186,6 +197,15 @@ class JMEAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
   vector <double>  _jetPtGen;
   vector <double>  _jetEtaGen;
   vector <double>  _jetPhiGen;
+  vector <double>  _puppijetPtGen;
+  vector <double>  _puppijetEtaGen;
+  vector <double>  _puppijetPhiGen;
+  vector <double>  _AK8jetPtGen;
+  vector <double>  _AK8jetEtaGen;
+  vector <double>  _AK8jetPhiGen;
+  vector <double>  _PuppiAK8jetPtGen;
+  vector <double>  _PuppiAK8jetEtaGen;
+  vector <double>  _PuppiAK8jetPhiGen;
   vector<double>  _jetJECuncty;
   vector<double>  _jetPUMVA; 
   vector<double>  _jetPtNoL2L3Res;
@@ -289,6 +309,8 @@ JMEAnalyzer::JMEAnalyzer(const edm::ParameterSet& iConfig)
   badChargedCandidateFilterUpdateToken_(consumes<bool>(iConfig.getParameter<edm::InputTag>("BadChargedCandidateFilterUpdate"))),
   verticesToken_(consumes<std::vector<Vertex> > (iConfig.getParameter<edm::InputTag>("Vertices"))),
   jetToken_(consumes< std::vector< pat::Jet> >(iConfig.getParameter<edm::InputTag>("Jets"))),
+  AK8jetToken_(consumes< std::vector< pat::Jet> >(iConfig.getParameter<edm::InputTag>("AK8Jets"))),
+  PuppiAK8jetToken_(consumes< std::vector< pat::Jet> >(iConfig.getParameter<edm::InputTag>("PuppiAK8Jets"))),
   jetPuppiToken_(consumes< std::vector< pat::Jet> >(iConfig.getParameter<edm::InputTag>("JetsPuppi"))),
   pfcandsToken_(consumes<pat::PackedCandidateCollection>(iConfig.getParameter<edm::InputTag>("PFCandCollection"))),
   metToken_(consumes<std::vector<pat::MET> > (iConfig.getParameter<edm::InputTag>("PFMet"))),
@@ -441,6 +463,80 @@ JMEAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
   }
   
+  edm::Handle< std::vector< pat::Jet> > AK8theJets;
+  iEvent.getByToken(AK8jetToken_,AK8theJets );
+
+  double AK8leadjetpt (0.);
+  for( std::vector<pat::Jet>::const_iterator jet = (*theJets).begin(); jet != (*theJets).end(); jet++ ) {
+    if((&*jet)->pt() >AK8leadjetpt) AK8leadjetpt = (&*jet)->pt();
+
+    
+    _AK8jetEta.push_back((&*jet)->eta());
+    _AK8jetPhi.push_back((&*jet)->phi());
+    _AK8jetPt.push_back((&*jet)->pt());
+
+    
+    double jetptgen(-99.), jetetagen(-99.),jetphigen(-99.);
+    if( (&*jet) ->genJet() !=0 ){
+      jetptgen= (&*jet)->genJet()->pt() ;
+      jetetagen= (&*jet)->genJet()->eta() ;
+      jetphigen= (&*jet)->genJet()->phi() ;
+    }
+    _AK8jetPtGen.push_back(jetptgen);
+    _AK8jetEtaGen.push_back(jetetagen);
+    _AK8jetPhiGen.push_back(jetphigen);
+
+  }
+
+  edm::Handle< std::vector< pat::Jet> > PuppiAK8theJets;
+  iEvent.getByToken(PuppiAK8jetToken_,PuppiAK8theJets );
+
+  double PuppiAK8leadjetpt (0.);
+  for( std::vector<pat::Jet>::const_iterator jet = (*theJets).begin(); jet != (*theJets).end(); jet++ ) {
+    if((&*jet)->pt() >PuppiAK8leadjetpt) PuppiAK8leadjetpt = (&*jet)->pt();
+
+    
+    _PuppiAK8jetEta.push_back((&*jet)->eta());
+    _PuppiAK8jetPhi.push_back((&*jet)->phi());
+    _PuppiAK8jetPt.push_back((&*jet)->pt());
+
+    
+    double jetptgen(-99.), jetetagen(-99.),jetphigen(-99.);
+    if( (&*jet) ->genJet() !=0 ){
+      jetptgen= (&*jet)->genJet()->pt() ;
+      jetetagen= (&*jet)->genJet()->eta() ;
+      jetphigen= (&*jet)->genJet()->phi() ;
+    }
+    _PuppiAK8jetPtGen.push_back(jetptgen);
+    _PuppiAK8jetEtaGen.push_back(jetetagen);
+    _PuppiAK8jetPhiGen.push_back(jetphigen);
+
+  }
+
+  edm::Handle< std::vector< pat::Jet> > PuppitheJets;
+  iEvent.getByToken(jetPuppiToken_,PuppitheJets );
+
+  double Puppileadjetpt (0.);
+  for( std::vector<pat::Jet>::const_iterator jet = (*theJets).begin(); jet != (*theJets).end(); jet++ ) {
+    if((&*jet)->pt() >Puppileadjetpt) Puppileadjetpt = (&*jet)->pt();
+
+    
+    _puppijetEta.push_back((&*jet)->eta());
+    _puppijetPhi.push_back((&*jet)->phi());
+    _puppijetPt.push_back((&*jet)->pt());
+
+    
+    double jetptgen(-99.), jetetagen(-99.),jetphigen(-99.);
+    if( (&*jet) ->genJet() !=0 ){
+      jetptgen= (&*jet)->genJet()->pt() ;
+      jetetagen= (&*jet)->genJet()->eta() ;
+      jetphigen= (&*jet)->genJet()->phi() ;
+    }
+    _puppijetPtGen.push_back(jetptgen);
+    _puppijetEtaGen.push_back(jetetagen);
+    _puppijetPhiGen.push_back(jetphigen);
+
+  }
   
   edm::Handle< std::vector<pat::Electron> > thePatElectrons;
   iEvent.getByToken(electronToken_,thePatElectrons);
@@ -505,7 +601,7 @@ JMEAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   edm::Handle<pat::PackedCandidateCollection> pfcands;
   iEvent.getByToken(pfcandsToken_ ,pfcands);
   for(pat::PackedCandidateCollection::const_reverse_iterator p = pfcands->rbegin() ; p != pfcands->rend() ; p++ ) {
-    if(p->pt()<PFCandPtCut_)continue;
+//    if(p->pt()<PFCandPtCut_)continue;
     _PFcand_pt.push_back(p->pt());
     _PFcand_eta.push_back(p->eta());
     _PFcand_phi.push_back(p->phi());
@@ -657,6 +753,15 @@ JMEAnalyzer::beginJob()
   outputTree->Branch("_jetEta",&_jetEta);
   outputTree->Branch("_jetPhi",&_jetPhi);
   outputTree->Branch("_jetPt",&_jetPt);
+  outputTree->Branch("_puppijetEta",&_puppijetEta);
+  outputTree->Branch("_puppijetPhi",&_puppijetPhi);
+  outputTree->Branch("_puppijetPt",&_puppijetPt);
+  outputTree->Branch("_AK8jetEta",&_AK8jetEta);
+  outputTree->Branch("_AK8jetPhi",&_AK8jetPhi);
+  outputTree->Branch("_AK8jetPt",&_AK8jetPt);
+  outputTree->Branch("_PuppiAK8jetEta",&_PuppiAK8jetEta);
+  outputTree->Branch("_PuppiAK8jetPhi",&_PuppiAK8jetPhi);
+  outputTree->Branch("_PuppiAK8jetPt",&_PuppiAK8jetPt);
   outputTree->Branch("_jetRawPt",&_jetRawPt);
   outputTree->Branch("_jet_CHEF",&_jet_CHEF);
   outputTree->Branch("_jet_NHEF",&_jet_NHEF);
@@ -672,6 +777,15 @@ JMEAnalyzer::beginJob()
   outputTree->Branch("_jetPtGen",&_jetPtGen);
   outputTree->Branch("_jetEtaGen",&_jetEtaGen);
   outputTree->Branch("_jetPhiGen",&_jetPhiGen);
+  outputTree->Branch("_puppijetPtGen",&_puppijetPtGen);
+  outputTree->Branch("_puppijetEtaGen",&_puppijetEtaGen);
+  outputTree->Branch("_puppijetPhiGen",&_puppijetPhiGen);
+  outputTree->Branch("_AK8jetPtGen",&_AK8jetPtGen);
+  outputTree->Branch("_AK8jetEtaGen",&_AK8jetEtaGen);
+  outputTree->Branch("_AK8jetPhiGen",&_AK8jetPhiGen);
+  outputTree->Branch("_PuppiAK8jetPtGen",&_PuppiAK8jetPtGen);
+  outputTree->Branch("_PuppiAK8jetEtaGen",&_PuppiAK8jetEtaGen);
+  outputTree->Branch("_PuppiAK8jetPhiGen",&_PuppiAK8jetPhiGen);
   outputTree->Branch("_jetJECuncty",&_jetJECuncty);
   outputTree->Branch("_jetPUMVA",&_jetPUMVA);
   outputTree->Branch("_jetPtNoL2L3Res",&_jetPtNoL2L3Res);
@@ -846,9 +960,18 @@ void JMEAnalyzer::InitandClearStuff(){
   PassEcalDeadCellBoundaryEnergyFilter_Update=false;
   PassBadChargedCandidateFilter_Update=false;
   
+  _puppijetEta.clear();
+  _puppijetPhi.clear();
+  _puppijetPt.clear();
   _jetEta.clear();
   _jetPhi.clear();
   _jetPt.clear();
+  _AK8jetEta.clear();
+  _AK8jetPhi.clear();
+  _AK8jetPt.clear();
+  _PuppiAK8jetEta.clear();
+  _PuppiAK8jetPhi.clear();
+  _PuppiAK8jetPt.clear();
   _jetRawPt.clear();
   _jet_CHEF.clear();
   _jet_NHEF.clear();
@@ -863,6 +986,15 @@ void JMEAnalyzer::InitandClearStuff(){
   _jetPtGen.clear();
   _jetEtaGen.clear();
   _jetPhiGen.clear();
+  _puppijetPtGen.clear();
+  _puppijetEtaGen.clear();
+  _puppijetPhiGen.clear();
+  _AK8jetPtGen.clear();
+  _AK8jetEtaGen.clear();
+  _AK8jetPhiGen.clear();
+  _PuppiAK8jetPtGen.clear();
+  _PuppiAK8jetEtaGen.clear();
+  _PuppiAK8jetPhiGen.clear();
   _jetJECuncty.clear();
   _jetPUMVA.clear();
   _jetPtNoL2L3Res.clear();
